@@ -1,0 +1,72 @@
+import pandas as pd
+import numpy as np
+from sklearn.cluster import KMeans
+from sklearn.preprocessing import StandardScaler, OneHotEncoder
+from sklearn.compose import ColumnTransformer
+from sklearn.pipeline import Pipeline
+import matplotlib.pyplot as plt
+
+from google.colab import files
+
+# Upload the file
+uploaded = files.upload()
+
+# Loading the dataset
+data = pd.read_csv('Mall_Customers.csv')
+
+# Display the first few rows
+print(data.head())
+# Selecting the features for clustering
+features = data[['Gender', 'Age', 'Annual Income (k$)', 'Spending Score (1-100)']]
+
+# Preprocessing steps
+preprocessor = ColumnTransformer(
+    transformers=[
+        ('num', StandardScaler(), ['Age', 'Annual Income (k$)', 'Spending Score (1-100)']),
+        ('cat', OneHotEncoder(), ['Gender'])
+    ]
+)
+
+# Fit and transform the features
+scaled_features = preprocessor.fit_transform(features)
+inertia = []
+K = range(1, 11)
+for k in K:
+    kmeans = KMeans(n_clusters=k, random_state=42)
+    kmeans.fit(scaled_features)
+    inertia.append(kmeans.inertia_)
+
+# Plot the elbow curve
+plt.figure(figsize=(10, 6))
+plt.plot(K, inertia, 'bx-')
+plt.xlabel('Number of clusters')
+plt.ylabel('Inertia')
+plt.title('Elbow Method for Optimal k')
+plt.show()
+# Fit the model with the chosen number of clusters
+k = 4
+kmeans = KMeans(n_clusters=k, random_state=42)
+data['cluster'] = kmeans.fit_predict(scaled_features)
+# Add cluster information to the original data
+data['Gender'] = features['Gender']  # Retain gender column for analysis
+
+# Calculate the mean of each feature for each cluster
+cluster_analysis = data.groupby('cluster').agg({
+    'Age': 'mean',
+    'Annual Income (k$)': 'mean',
+    'Spending Score (1-100)': 'mean',
+    'Gender': lambda x: x.mode()[0]  # Most common gender in the cluster
+})
+print(cluster_analysis)
+from sklearn.decomposition import PCA
+
+pca = PCA(n_components=2)
+reduced_features = pca.fit_transform(scaled_features)
+
+plt.figure(figsize=(10, 6))
+plt.scatter(reduced_features[:, 0], reduced_features[:, 1], c=data['cluster'], cmap='viridis')
+plt.title('Customer Clusters')
+plt.xlabel('PCA Component 1')
+plt.ylabel('PCA Component 2')
+plt.colorbar(label='Cluster')
+plt.show()
