@@ -1,0 +1,7 @@
+Group Customers of a retail store
+
+Use k-means clustering algorithm to group customers of a retail store based on their purchase history
+
+to group customers based based on purchase history using k-means clustering we need to collect data on customer purchase history. 
+Then preprocess the data to handle missing data and for its normalization.
+Then choose the number of clusters, apply k-means clustering and analyze the clusters. Later interpret and evaluate the model.
